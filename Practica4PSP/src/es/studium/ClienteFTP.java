@@ -69,6 +69,7 @@ public class ClienteFTP extends JFrame {
 	// para saber el directorio y fichero seleccionado
 	static String direcSelec = direcInicial;
 	static String ficheroSelec = "";
+	static String nfic = "";
 	private final JButton botonRenDir = new JButton("Renombrar");
 	private final JPanel panel = new JPanel((LayoutManager) null);
 
@@ -120,7 +121,6 @@ public class ClienteFTP extends JFrame {
 		cab3.setFont(new Font("Tahoma", Font.BOLD, 11));
 		cab3.setHorizontalAlignment(SwingConstants.CENTER);
 		cab3.setText("DIRECTORIO RAIZ: " + direcInicial);
-		
 
 		listaDirec.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 
@@ -237,7 +237,7 @@ public class ClienteFTP extends JFrame {
 						if (cliente.makeDirectory(directorio)) {
 							String m = nombreCarpeta.trim() + " => Se ha creado correctamente ...";
 							JOptionPane.showMessageDialog(null, m);
-							campo.setText(m);
+							campo.setText(m.replaceAll("//", "/"));
 							// directorio de trabajo actual
 							cliente.changeWorkingDirectory(direcSelec);
 							FTPFile[] ff2 = null;
@@ -343,7 +343,7 @@ public class ClienteFTP extends JFrame {
 						if (cliente.removeDirectory(directorio)) {
 							String m = nombreCarpeta.trim() + " => Se ha eliminado correctamente ...";
 							JOptionPane.showMessageDialog(null, m);
-							campo.setText(m);
+							campo.setText(m.replaceAll("//", "/"));
 							// directorio de trabajo actual
 							cliente.changeWorkingDirectory(direcSelec);
 							FTPFile[] ff2 = null;
@@ -384,12 +384,20 @@ public class ClienteFTP extends JFrame {
 		listaDirec.addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent lse) {
-			
+				
 				String fic = "";
+				
 				if (lse.getValueIsAdjusting()) {
 					ficheroSelec = "";
 					// elemento que se ha seleccionado de la lista
+					
 					fic = listaDirec.getSelectedValue().toString();
+					//Si fic no esta vacio le asignamos el valor a nfic
+					if (!fic.isEmpty())
+					{
+						nfic = fic;
+					}
+	
 				}
 				if (listaDirec.getSelectedIndex() == 0) {
 					// Se hace clic en el primer elemento del JList
@@ -416,18 +424,28 @@ public class ClienteFTP extends JFrame {
 				// No se hace clic en el primer elemento del JList
 				// Puede ser un fichero o un directorio
 				else {
+					File nf = new File(direcSelec);
 					if (fic.contains("(DIR)")) {
 						// Se trata de un directorio
 						try {
 							fic = fic.substring(6);
 							String direcSelec2 = "";
 							if (direcSelec.equals("/"))
+							{
+								System.out.println("----------------direcSelec vale "+direcSelec);
 								direcSelec2 = direcSelec + fic;
+								direcSelec2.replaceAll("//", "/");
+							}
 							else
+							{
+								System.out.println("----------------direcSelec vale "+direcSelec);
 								direcSelec2 = direcSelec + "/" + fic;
+								direcSelec2.replaceAll("//", "/");
+							}
 							FTPFile[] ff2 = null;
 							cliente.changeWorkingDirectory(direcSelec2);
 							ff2 = cliente.listFiles();
+							fic=fic.replaceAll("//", "/");
 							campo.setText("DIRECTORIO: " + fic + ", " + ff2.length + " elementos");
 							// directorio actual
 							direcSelec = direcSelec2;
@@ -447,14 +465,15 @@ public class ClienteFTP extends JFrame {
 
 							direcSelec += "/" + fic;
 							System.out.println("fic: " + fic);
+							System.out.println("nfic: " + nfic);
 							System.out.println("direcSelec+fic: " + direcSelec);
 						}
-						campo.setText("FICHERO SELECCIONADO: " + ficheroSelec);
+						campo.setText("FICHERO SELECCIONADO: " + ficheroSelec.replaceAll("//", "/"));
 						ficheroSelec = fic;// nos quedamos con el nocmbre
 
 					} // fin else
 				} // fin else de fichero o directorio
-				campo2.setText("DIRECTORIO ACTUAL: " + direcSelec);
+				campo2.setText("DIRECTORIO ACTUAL: " + direcSelec.replaceAll("//", "/"));
 				// fin if inicial
 			}
 		});// fin acción en JList
@@ -472,7 +491,6 @@ public class ClienteFTP extends JFrame {
 		// se eliminan los elementos de la lista
 		listaDirec.removeAll();
 		try {
-			// se establece el directorGadugiabajo acPLAIN
 			cliente.changeWorkingDirectory(direc2);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -498,7 +516,7 @@ public class ClienteFTP extends JFrame {
 			// se muestra en pantalla la lista de ficheros y direc
 			listaDirec.setModel(modeloLista);
 		} catch (NullPointerException n) {
-			; // Se produce al cambiar de directorio
+			// Se produce al cambiar de directorio
 		}
 	}// Fin llenarLista
 
@@ -526,9 +544,17 @@ public class ClienteFTP extends JFrame {
 
 	private void DescargarFichero(String NombreCompleto, String nombreFichero) {
 		File file;
+		// le quitamos la ultima "/" para que quede solo el nombre del fichero
+		
 		String nufi = direcSelec.substring(0, direcSelec.length() - 1);
 		String archivoyCarpetaDestino = "";
 		String carpetaDestino = "";
+		System.out.println("***********DIRECSELEC 1 "+direcSelec);
+		System.out.println("***********NUFI "+nufi);
+		System.out.println("***********Nomfi "+nombreFichero);
+		System.out.println("***********Nomcom "+NombreCompleto);
+		
+		
 		JFileChooser f = new JFileChooser();
 		// solo se pueden seleccionar directorios
 		f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -540,7 +566,9 @@ public class ClienteFTP extends JFrame {
 			// obtener carpeta de destino
 			carpetaDestino = (file.getAbsolutePath()).toString();
 			// construimos el nombre completo que se crear en nuestro disco
-			archivoyCarpetaDestino = carpetaDestino + File.separator + nufi;
+			archivoyCarpetaDestino = carpetaDestino + File.separator + nfic;
+			System.out.println("***********carpeta destino "+carpetaDestino);
+			System.out.println("***********archivo + carpetadestino "+archivoyCarpetaDestino);
 
 			try {
 				cliente.setFileType(FTP.BINARY_FILE_TYPE);
@@ -559,32 +587,38 @@ public class ClienteFTP extends JFrame {
 
 	private void BorrarFichero(String NombreCompleto, String nombreFichero) {
 		// pide confirmación
-		int seleccion = JOptionPane.showConfirmDialog(null, "¿Desea eliminar el fichero seleccionado?");
+		String nufi = direcSelec.substring(0, direcSelec.length() - 1);
+		File archivo = new File(rutacompleta + nufi);
+		int seleccion = JOptionPane.showConfirmDialog(null, "¿Desea eliminar el fichero '" + archivo.getName() + "'?");
 		if (seleccion == JOptionPane.OK_OPTION) {
 			try {
-				String nufi = direcSelec.substring(0, direcSelec.length() - 1);
-				File archivo = new File(rutacompleta + nufi);
-				if (archivo.exists()) {
-					  System.out.println("Nombre del archivo "+archivo.getName());
-				}
 
-				System.out.println("NombreFichero -->" + nufi);
-				if (cliente.deleteFile(NombreCompleto)) {
-					String m = nufi + " => Eliminado correctamente... ";
-					JOptionPane.showMessageDialog(null, m);
-					campo.setText(m);
-					// directorio de trabajo actual
-				
-					cliente.changeToParentDirectory();
-					String niu= direcSelec.substring(0,(direcSelec.length()) - (archivo.getName().length()+1));
-					niu.replaceAll("//", "/");
-					FTPFile[] ff2 = null;
-					// obtener ficheros del directorio actual
-					ff2 = cliente.listFiles();
-					// llenar la lista con los ficheros del directorio actual
-					llenarLista(ff2, niu);
-				} else
-					JOptionPane.showMessageDialog(null, nufi + " => No se ha podido eliminar ...");
+				if (archivo.exists()) {
+					System.out.println("Nombre del archivo " + archivo.getName());
+
+					System.out.println("NombreFichero -->" + nufi);
+					if (cliente.deleteFile(NombreCompleto)) {
+						String m = archivo.getName() + " => Eliminado correctamente... ";
+						JOptionPane.showMessageDialog(null, m);
+						campo.setText(m);
+						// directorio de trabajo actual
+
+						
+						//cojer solo la ruta relativa del archivo
+						String niu = direcSelec.substring(0, (direcSelec.length()) - (archivo.getName().length() + 1));
+						System.out.println("****** NIU: "+niu);
+						//le quitamos las barras dobles
+						niu.replaceAll("//", "/");
+						FTPFile[] ff2 = null;
+						// obtener ficheros del directorio actual
+						ff2 = cliente.listFiles();
+						// llenar la lista con los ficheros del directorio donde estaba ubicado el archivo
+						llenarLista(ff2, niu);
+					} else
+						JOptionPane.showMessageDialog(null,"No se ha podido eliminar '"+archivo.getName()+"'...");
+				} else {
+					System.out.println("El archivo " + nufi + " no existe");
+				}
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
