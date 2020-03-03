@@ -35,6 +35,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.UIManager;
 import java.awt.LayoutManager;
+import java.awt.Window.Type;
 
 public class ClienteFTP extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -79,6 +80,8 @@ public class ClienteFTP extends JFrame {
 
 	public ClienteFTP() throws IOException {
 		super("CLIENTE BÁSICO FTP");
+		setType(Type.UTILITY);
+		setTitle("CLIENTE FTP");
 		setForeground(new Color(0, 0, 0));
 		getContentPane().setBackground(new Color(153, 204, 255));
 		// para ver los comandos que se originan
@@ -257,7 +260,7 @@ public class ClienteFTP extends JFrame {
 		botonRenDir.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String nombreCarpeta = JOptionPane.showInputDialog(null, "Introduce el nuevo nombre del directorio",
+				String nombreCarpeta = JOptionPane.showInputDialog(null, "Introduce el nuevo nombre:",
 						"Nuevo nombre");
 				if (!(nombreCarpeta == null)) {
 
@@ -271,13 +274,19 @@ public class ClienteFTP extends JFrame {
 								System.out.println("Es un archivo");
 								try {
 									System.out.println("antiguo: " + direcSelec + " nuevo: " + nombreCarpeta);
-
+									String cpwd = cliente.printWorkingDirectory();
 									boolean success = cliente.rename(direcSelec, nombreCarpeta);
 
 									if (success) {
-
-										System.out
-												.println("Se ha cambiado el nombre al fichero '" + nombreCarpeta + "'");
+										JOptionPane.showMessageDialog(null, "Se ha cambiado el nombre del"
+												+ " fichero '"+nfic+"' a '" + nombreCarpeta + "'");
+										
+										System.out.println("Se ha cambiado el nombre al fichero '" + nombreCarpeta + "'");
+										FTPFile[] ff2 = null;
+										// obtener ficheros del directorio actual
+										ff2 = cliente.listFiles();
+										// llenar la lista con los ficheros del directorio actual
+										llenarLista(ff2, cpwd);
 									} else {
 										System.out.println("Error al intentar renombrar el fichero ubicado en: "
 												+ direcSelec + " a " + nombreCarpeta);
@@ -297,10 +306,11 @@ public class ClienteFTP extends JFrame {
 									boolean success = cliente.rename(direcSelec, nombreCarpeta);
 
 									if (success) {
-
+										JOptionPane.showMessageDialog(null, "Se ha cambiado el nombre del"
+												+ " directorio '"+direcSelec+"' a '" + nombreCarpeta + "'");
 										System.out.println(
 												"Se ha cambiado el nombre del directorio a '" + nombreCarpeta + "'");
-										System.out.println("cpwd vale'" + cpwd + "'");
+		
 										cliente.changeWorkingDirectory(cpwd);
 										FTPFile[] ff2 = null;
 										// obtener ficheros del directorio actual
@@ -424,7 +434,6 @@ public class ClienteFTP extends JFrame {
 				// No se hace clic en el primer elemento del JList
 				// Puede ser un fichero o un directorio
 				else {
-					File nf = new File(direcSelec);
 					if (fic.contains("(DIR)")) {
 						// Se trata de un directorio
 						try {
